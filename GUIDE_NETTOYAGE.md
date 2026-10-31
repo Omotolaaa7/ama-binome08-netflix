@@ -73,13 +73,14 @@ Premier diagnostic fait sur `netflix_titles.csv` pour savoir où chercher. **Ces
 | Problème | Colonne(s) | Lignes | Section |
 |---|---|---|---|
 | Espaces au début de la date (`" August 4, 2017"`) | `date_added` | 88 | 2.1 / 2.3 |
-| **Espaces insécables** invisibles (`\xa0`), ex. `"Consequences\xa0"` | `title`, `cast`, `description` | 10 + 1 + 9 | 2.1 |
-| Doubles espaces | `title`, `cast`, `description` | 3 + 7 + 7 | 2.1 |
+| **Espaces insécables** invisibles (`\xa0`), ex. `"Consequences\xa0"` | `title`, `description` | 5 + 9 | 2.1 |
+| **Espaces de largeur nulle** (`​`), totalement invisibles, ex. `"​Goli Soda 2"` | `title`, `cast` | 5 + 1 | 2.1 |
+| Doubles espaces, ex. `"Tremors 5:  Bloodline"` | `title`, `cast`, `description` | 3 + 7 + 6 | 2.1 |
 | **Durée rangée dans `rating`** (`"74 min"`) et `duration` vide : les 3 spectacles de Louis C.K. (s5542, s5795, s5814) | `rating`, `duration` | 3 | 2.2 |
 | Date d'ajout en texte (`"September 25, 2021"`) | `date_added` | 8 797 | 2.3 |
 | Une colonne, deux unités : `"90 min"` (films) et `"2 Seasons"` / `"1 Season"` (séries) | `duration` | 8 804 | 2.4 |
 | Plusieurs valeurs par case séparées par des virgules | `country` (1 320), `listed_in` (6 787), `cast` (7 101), `director` (614) | | 2.6 |
-| Pays commençant par une virgule (`", South Korea"`) | `country` | 2 | 2.6 |
+| Pays commençant par une virgule (`", South Korea"`) ou finissant par une virgule (`"Poland,"`) | `country` | 2 + 5 | 2.6 |
 | `NR` (*Not Rated*) et `UR` (*Unrated*) veulent dire la même chose | `rating` | 80 + 3 | 2.7 |
 | **Quasi-doublons** : même titre à la casse près (`Love in a Puff` / `Love In A Puff`, `Consequences` / `Consequences\xa0`…) | `title` | 6 paires | 2.7 |
 | Même description pour des versions linguistiques (`Petta` / `Petta (Telugu Version)`) | `description` | 59 | 2.7 |
@@ -91,8 +92,10 @@ Premier diagnostic fait sur `netflix_titles.csv` pour savoir où chercher. **Ces
 Ce sont des **pistes**, pas des réponses : la décision et sa justification sont à vous, et c'est ce qui est noté.
 
 ### 2.1 Texte et espaces · Omotola
-- Repérer les colonnes concernées avec `str.contains(r"\s{2,}")` et en cherchant `"\xa0"` explicitement.
-- Piège : avec pandas 3, le texte est stocké par pyarrow, et `\s` dans une expression régulière ne reconnaît **pas** l'espace insécable : une recherche `r"\s$"` passe à côté de `"Consequences\xa0"`. `str.strip()` l'enlève bien en début et fin de texte, mais pas au milieu : remplacer `"\xa0"` par `" "`, puis vérifier qu'il n'en reste aucun.
+- Repérer les colonnes concernées en cherchant explicitement `"  "` (double espace), `"\xa0"` et `"​"` avec `str.contains(..., regex=False)`.
+- Piège 1 : avec pandas 3, le texte est stocké par pyarrow, et `\s` dans une expression régulière ne reconnaît **pas** l'espace insécable : une recherche `r"\s$"` passe à côté de `"Consequences\xa0"`. `str.strip()` l'enlève bien en début et fin de texte, mais pas au milieu (`"Legend\xa0of\xa0Exorcism"`) : remplacer `"\xa0"` par `" "`.
+- Piège 2 : `str.strip()` n'enlève **pas** l'espace de largeur nulle `"​"`, ni au début ni à la fin. Il faut le supprimer (remplacer par `""`, pas par une espace), sinon `"​Goli Soda 2"` reste un titre différent de `"Goli Soda 2"` et se trie mal.
+- Ordre conseillé : remplacer `​` puis `\xa0`, réduire les doubles espaces, puis `strip()`. Vérifier ensuite qu'il ne reste aucun des trois.
 - Compter les lignes modifiées : comparer la colonne avant et après (`(avant != apres).sum()`).
 
 ### 2.2 Valeurs décalées · Omotola
@@ -122,7 +125,8 @@ Trois options pour chaque colonne : **supprimer** la ligne, **imputer** (remplir
 ### 2.6 Colonnes à plusieurs valeurs · Amen
 - Le problème : `"United States, India"` compte comme **un** pays dans un `value_counts()`. Impossible d'analyser « par pays » ou « par genre » tel quel.
 - Outil : `str.split(",")` puis `explode()` puis `str.strip()` donne une ligne par (titre, pays).
-- Proposition : garder dans le CSV principal les listes nettoyées (séparateur `", "` homogène, sans virgule en tête ni case vide), et exporter **deux tables longues** à part : `netflix_pays.csv` (`show_id`, `pays`) et `netflix_genres.csv` (`show_id`, `genre`). On justifie : une table par relation, pas de colonnes `pays_1`, `pays_2`… à moitié vides.
+- Attention aux 7 pays mal formés (`", South Korea"`, `"United States,"`…) : après `split` + `explode`, ils donnent des pays vides `""` à retirer.
+- Proposition : garder dans le CSV principal les listes nettoyées (séparateur `", "` homogène, sans virgule en tête ou en fin ni case vide), et exporter **deux tables longues** à part : `netflix_pays.csv` (`show_id`, `pays`) et `netflix_genres.csv` (`show_id`, `genre`). On justifie : une table par relation, pas de colonnes `pays_1`, `pays_2`… à moitié vides.
 - `cast` (36 000 acteurs différents) et `director` : le sujet ne demande pas d'analyse par acteur, on peut les laisser en liste. À dire.
 - `listed_in` : 42 genres. Les genres de séries et de films sont distincts (`Dramas` / `TV Dramas`) : les fusionner ou non ? Et les genres génériques `Movies` / `TV Shows` ?
 
