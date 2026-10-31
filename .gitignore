@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.env
+
+# Brouillons personnels : chacun teste ici avant de recopier dans le notebook commun
+brouillons/*
+!brouillons/.gitkeep
+
+# Exports HTML intermédiaires (seul le PDF final est versionné)
+rapport/*.html

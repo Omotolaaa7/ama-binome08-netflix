@@ -1,0 +1,14 @@
+# Binôme 08 · Nettoyage du catalogue Netflix
+# Python 3.12 recommandé (3.11 minimum, exigé par pandas 3)
+#   python -m venv .venv
+#   .venv\Scripts\Activate.ps1
+#   python -m pip install -r requirements.txt
+#
+# Versions figées : les deux membres du binôme doivent obtenir exactement les mêmes résultats.
+pandas==3.0.6
+numpy==2.5.4
+pyarrow==26.0.0
+matplotlib==3.11.2
+jupyterlab==4.6.4
+ipykernel==7.4.0
+nbconvert[webpdf]==7.17.2
