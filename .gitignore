@@ -9,3 +9,6 @@ brouillons/*
 
 # Exports HTML intermédiaires (seul le PDF final est versionné)
 rapport/*.html
+
+# Fichiers temporaires de Word
+~$*
