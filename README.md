@@ -1,77 +1,91 @@
-# Binôme 08 · Nettoyage du catalogue Netflix
+# Binôme 08 : Nettoyage et restructuration du catalogue Netflix
 
-**AMA PIIA cohorte 2** · exercice de nettoyage des données en binômes (sujet donné le 30/10/2026)
-**Binôme** : QUENUM Amen et AFOUDA Omotola · **Domaine** : Médias
+AMA PIIA cohorte 2 (Académie des Mathématiques Appliquées)  
+Exercice de nettoyage des données en binôme  
+Binôme : QUENUM Amen et AFOUDA Omotola  
+Domaine : Médias  
 
-Nettoyer le catalogue des films et séries de Netflix pour pouvoir analyser les contenus par pays, genre et année.
-Données : [Kaggle · shivamb/netflix-shows](https://www.kaggle.com/datasets/shivamb/netflix-shows) (`netflix_titles.csv`, 8 807 lignes, 12 colonnes).
+Nettoyer le catalogue des films et séries de Netflix pour pouvoir analyser les contenus par pays, genre et année.  
+Données : Kaggle shivamb/netflix-shows (netflix_titles.csv, 8 807 lignes, 12 colonnes brutes).  
 
-La méthode, la répartition du travail et le planning sont dans **[GUIDE_NETTOYAGE.md](GUIDE_NETTOYAGE.md)**. À lire en premier.
+La méthode, les problèmes repérés et la répartition initiale du travail sont décrits dans GUIDE_NETTOYAGE.md.  
+
+---
 
 ## Contenu du dépôt
 
-| Chemin | Contenu |
-|---|---|
-| `notebooks/nettoyage_netflix_binome08.ipynb` | Le notebook commun (le livrable) |
-| `data/raw/netflix_titles.csv` | Fichier d'origine, **jamais modifié** |
-| `data/processed/` | CSV nettoyé(s) produit(s) par le notebook (livrable, versionné) |
-| `rapport/` | PDF final exporté depuis le notebook |
-| `brouillons/` | Notebooks d'essai personnels (non versionnés) |
-| `GUIDE_NETTOYAGE.md` | Méthode, problèmes repérés, répartition, planning |
+```text
+ama-binome08-netflix/
+│
+├── data/
+│   ├── raw/
+│   │   └── netflix_titles.csv               # Fichier d'origine intact (8 807 lignes x 12 colonnes)
+│   └── processed/
+│       ├── netflix_titles_propre.csv        # Fichier nettoyé (8 800 lignes x 15 colonnes)
+│       ├── netflix_pays.csv                 # Table longue des pays (10 003 associations)
+│       └── netflix_genres.csv               # Table longue des genres (19 304 associations)
+│
+├── app/
+│   ├── app.py                              # Application Streamlit
+│   └── utils/
+│       ├── data_loader.py                  # Chargement et calcul des métriques avec cache
+│       └── charts.py                       # Graphiques interactifs
+│
+├── reports/
+│   ├── rapport_netflix.docx                # Rapport d'analyse détaillé
+│   ├── presentation_netflix.pptx           # Présentation orale (notes incluses)
+│   └── img/                                # Figures insérées dans le rapport et les diapos
+│
+├── rapport/
+│   └── nettoyage_netflix_binome08.pdf      # Export PDF original du notebook
+│
+├── notebooks/
+│   └── nettoyage_netflix_binome08.ipynb    # Le notebook d'origine commenté
+│
+├── docs/
+│   └── explication_du_code_binome08.docx   # Document d'explication interne
+│
+├── GUIDE_NETTOYAGE.md                      # Guide méthodologique initial
+├── requirements.txt                        # Liste des dépendances figées
+└── README.md
+```
 
-## Installation (une seule fois)
+---
 
-Prérequis : [Python 3.12](https://www.python.org/downloads/) (cocher « Add python.exe to PATH »), [Git](https://git-scm.com/downloads) et VS Code avec l'extension **Jupyter**.
+## Lancement rapide
+
+### 1. Activer l'environnement virtuel
 
 ```powershell
-git clone https://github.com/Omotolaaa7/ama-binome08-netflix.git
-cd ama-binome08-netflix
-python -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-code .
 ```
 
-Si PowerShell refuse d'activer l'environnement (« l'exécution de scripts est désactivée ») :
+*(Sur macOS ou Linux : `source .venv/bin/activate`)*
+
+### 2. Lancer le dashboard Streamlit
 
 ```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+streamlit run app/app.py
 ```
 
-Ouvrir `notebooks/nettoyage_netflix_binome08.ipynb`, choisir le noyau **`.venv`** en haut à droite, puis **Redémarrer → Exécuter tout**. Si la première cellule plante, le noyau choisi n'est pas le bon.
+L'application s'ouvre sur `http://localhost:8501`.  
+Elle propose 7 pages d'exploration avec deux niveaux de lecture (accessible et technique).
 
-Sur macOS ou Linux, remplacer `.venv\Scripts\Activate.ps1` par `source .venv/bin/activate`.
+### 3. Consulter les documents
 
-## Routine de travail à deux
+- Rapport Word : `reports/rapport_netflix.docx`
+- Support de présentation : `reports/presentation_netflix.pptx` (déroulé de 9 min 15 s avec notes orales et diapositives de réserve)
+- Notebook : `notebooks/nettoyage_netflix_binome08.ipynb`
 
-Les notebooks fusionnent très mal dans Git (c'est du JSON). On évite donc de les modifier en même temps : **un seul d'entre nous a « la main » sur le notebook commun à un instant donné**.
+---
 
-1. Prévenir l'autre : « je prends le notebook ».
-2. Récupérer la dernière version : `git pull`
-3. Travailler uniquement dans **ses** sections (voir la répartition dans le guide). Pour tester sans gêner l'autre, utiliser un brouillon dans `brouillons/`.
-4. Avant de pousser : **Redémarrer → Exécuter tout**, vérifier qu'il n'y a aucune erreur, enregistrer.
-5. Envoyer :
-   ```powershell
-   git add notebooks data/processed
-   git commit -m "Partie 2.3 : conversion de date_added"
-   git push
-   ```
-6. Prévenir l'autre : « c'est poussé, à toi ».
+## Chiffres clés vérifiés
 
-En cas de conflit au `git pull` sur le notebook : ne pas éditer le JSON à la main. Garder sa propre version de côté (`copy notebooks\nettoyage_netflix_binome08.ipynb brouillons\ma_version.ipynb`), prendre celle du dépôt (`git checkout --theirs notebooks/nettoyage_netflix_binome08.ipynb`, puis `git add` et `git commit`), et recopier ses cellules dedans.
-
-## Produire le PDF final
-
-À faire à la toute fin, une fois le notebook complet et exécuté sans erreur.
-
-```powershell
-jupyter nbconvert --to webpdf --allow-chromium-download --output-dir rapport notebooks/nettoyage_netflix_binome08.ipynb
-```
-
-La première fois, la commande télécharge un navigateur Chromium (environ 150 Mo). Si elle échoue, solution de repli sans rien installer :
-
-```powershell
-jupyter nbconvert --to html --output-dir rapport notebooks/nettoyage_netflix_binome08.ipynb
-```
-
-puis ouvrir le fichier HTML obtenu dans Chrome ou Edge et faire **Ctrl+P → Enregistrer au format PDF**.
+| Indicateur | Valeur brute | Valeur nettoyée |
+|---|---|---|
+| Lignes | 8 807 | 8 800 (7 doublons supprimés) |
+| Colonnes | 12 | 15 (4 colonnes ajoutées, 1 retirée) |
+| Données manquantes | 4 307 cases vides | 4 294 marquées "Non renseigné", 10 dates vides |
+| Associations Titre-Pays | Listes groupées | 10 003 lignes (table découpée) |
+| Associations Titre-Genre | Listes groupées | 19 304 lignes (table découpée) |
+| Titres liés aux États-Unis | 2 818 (brut) | 3 688 (table découpée) |
